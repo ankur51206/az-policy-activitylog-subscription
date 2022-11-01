@@ -25,178 +25,146 @@ METADATA
 
   parameters = <<PARAMETERS
 {
-	"logAnalytics": {
-		"type": "string",
-		"metadata": {
-			"displayName": "Log Analytics workspace",
-			"description": "Select the Log Analytics workspace from dropdown list",
-			"strongType": "omsWorkspace"
-		}
-	},
-	"location": {
-		"type": "string",
-		"metadata": {
-			"displayName": "location",
-			"description": "Select location where the resources is deployed",
-			"strongType": "location"
-		}
-	},
-	"eventHub": {
-		"type": "string",
-		"metadata": {
-			"displayName": "eventHub",
-			"description": "Event hub where logs will be sent",
-			"strongType": "Microsoft.EventHub/namespaces/eventhubs"
-		}
-	},
-	"authorizationRule": {
-		"type": "string",
-		"metadata": {
-			"displayName": "authorizationRule",
-			"description": "Select the access key for the eventhub",
-			"strongType": "Microsoft.EventHub/namespaces/AuthorizationRules"
-		}
-	}
-}
+        "eventHubRuleId": {
+            "type": "String",
+            "metadata": {
+                "displayName": "Event Hub Authorization Rule Id",
+                "description": "The Event Hub authorization rule Id for Azure Diagnostics. The authorization rule needs to be at Event Hub namespace level. e.g. /subscriptions/{subscription Id}/resourceGroups/{resource group}/providers/Microsoft.EventHub/namespaces/{Event Hub namespace}/authorizationrules/{authorization rule}",
+                "strongType": "Microsoft.EventHub/Namespaces/AuthorizationRules",
+                "assignPermissions": true
+            }
+        },
+        "effect": {
+            "type": "String",
+            "metadata": {
+                "displayName": "Effects",
+                "description": "Enable or disable the execution of the Policy."
+            },
+            "allowedValues": [
+                "DeployIfNotExists",
+                "Disabled"
+            ],
+            "defaultValue": "DeployIfNotExists"
+        },
+        "profileName": {
+            "type": "String",
+            "metadata": {
+                "displayName": "Profile name",
+                "description": "The diagnostic settings profile name"
+            },
+            "defaultValue": "setbypolicy_eventHub"
+        }
+    }
 PARAMETERS
 
 
   policy_rule = <<POLICY_RULE
 
 {
-	"if": {
-		"allOf": [{
-				"field": "type",
-				"equals": "Microsoft.Subscription/"
-			},
-			{
-				"field": "location",
-				"equals": "[parameters('location')]"
-			}
-		]
-	},
-	"then": {
-		"effect": "deployIfNotExists",
-		"details": {
-			"type": "Microsoft.Insights/diagnosticSettings",
-			"roleDefinitionIds": [
-				"/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"
-			],
-			"existenceCondition": {
-				"allOf": [{
-						"field": "Microsoft.Insights/diagnosticSettings/logs.enabled",
-						"equals": "True"
-					},
-					{
-						"field": "Microsoft.Insights/diagnosticSettings/metrics.enabled",
-						"equals": "True"
-					},
-					{
-						"field": "Microsoft.Insights/diagnosticSettings/workspaceId",
-						"matchInsensitively": "[parameters('logAnalytics')]"
-					},
-					{
-						"field": "Microsoft.Insights/diagnosticSettings/eventHubAuthorizationRuleId",
-						"matchInsensitively": "[parameters('authorizationRule')]"
-					},
-					{
-						"field": "Microsoft.Insights/diagnosticSettings/eventHubName",
-						"matchInsensitively": "[parameters('eventHub')]"
-					}
-				]
-			},
-			"deployment": {
-				"properties": {
-					"mode": "incremental",
-					"template": {
-						"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-						"contentVersion": "1.0.0.0",
-						"parameters": {
-							"resourceName": {
-								"type": "string"
-							},
-							"logAnalytics": {
-								"type": "string"
-							},
-							"location": {
-								"type": "string"
-							},
-							"authorizationRule": {
-								"type": "string"
-							},
-							"eventHub": {
-								"type": "string"
-							}
-						},
-						"variables": {},
-						"resources": [{
-							"type": "Microsoft.Insights/diagnosticSettings",
-							"apiVersion": "2017-05-01-preview",
-							"name": "SubscriptionEventHubDiags-setByPolicy",
-							"location": "[parameters('location')]",
-							"properties": {
-								"workspaceId": "[parameters('workspaceId')]",
-								"eventHubAuthorizationRuleId": "[parameters('authorizationRule')]",
-								"eventHubName": "[parameters('eventHub')]",
-								"logs": [{
-										"category": "Administrative",
-										"enabled": true
-									},
-									{
-										"category": "Security",
-										"enabled": true
-									},
-									{
-										"category": "ServiceHealth",
-										"enabled": true
-									},
-									{
-										"category": "Alert",
-										"enabled": true
-									},
-									{
-										"category": "Recommendation",
-										"enabled": true
-									},
-									{
-										"category": "Policy",
-										"enabled": true
-									},
-									{
-										"category": "Autoscale",
-										"enabled": true
-									},
-									{
-										"category": "ResourceHealth",
-										"enabled": true
-									}
-								]
-							}
-						}],
-						"outputs": {}
-					},
-					"parameters": {
-						"logAnalytics": {
-							"value": "[parameters('logAnalytics')]"
-						},
-						"location": {
-							"value": "[field('location')]"
-						},
-						"resourceName": {
-							"value": "[field('name')]"
-						},
-						"authorizationRule": {
-							"value": "[parameters('authorizationRule')]"
-						},
-						"eventHub": {
-							"value": "[parameters('eventHub')]"
-						}
-					}
-				}
-			}
-		}
-	}
-}
+        "if": {
+            "allOf": [
+                {
+                    "field": "type",
+                    "equals": "Microsoft.Resources/subscriptions"
+                }
+            ]
+        },
+        "then": {
+            "effect": "[parameters('effect')]",
+            "details": {
+                "type": "Microsoft.Insights/diagnosticSettings",
+                "ExistenceScope": "Subscription",
+                "DeploymentScope": "Subscription",
+                "ExistenceCondition": {
+                    "allOf": [
+                        {
+                            "field": "Microsoft.Insights/diagnosticSettings/eventHubAuthorizationRuleId",
+                            "equals": "[parameters('eventHubRuleId')]"
+                        },
+                        {
+                            "field": "name",
+                            "equals": "[parameters('profileName')]"
+                        }
+                    ]
+                },
+                "roleDefinitionIds": [
+                    "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+                ],
+                "deployment": {
+                    "location": "eastus",
+                    "properties": {
+                        "mode": "incremental",
+                        "template": {
+                            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                            "contentVersion": "1.0.0.0",
+                            "parameters": {
+                                "eventHubRuleId": {
+                                    "type": "String"
+                                },
+                                "profileName": {
+                                    "type": "String"
+                                }
+                            },
+                            "variables": {},
+                            "resources": [
+                                {
+                                    "type": "Microsoft.Insights/diagnosticSettings",
+                                    "apiVersion": "2017-05-01-preview",
+                                    "name": "[parameters('profileName')]",
+                                    "location": "global",
+                                    "properties": {
+                                        "eventHubAuthorizationRuleId": "[parameters('eventHubRuleId')]",
+                                        "logs": [
+                                            {
+                                                "category": "Administrative",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "Security",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "ServiceHealth",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "Alert",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "Recommendation",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "Policy",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "Autoscale",
+                                                "enabled": true
+                                            },
+                                            {
+                                                "category": "ResourceHealth",
+                                                "enabled": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "parameters": {
+                            "eventHubRuleId": {
+                                "value": "[parameters('eventHubRuleId')]"
+                            },
+                            "profileName": {
+                                "value": "[parameters('profileName')]"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 POLICY_RULE
 
 }
@@ -205,24 +173,18 @@ POLICY_RULE
 data "azurerm_subscription" "current" {}
 
 resource "azurerm_subscription_policy_assignment" "assign_policy" {
-  name                 = "policy-assignment-activity-laws1"
+  name                 = "policy-assignment-activity-logs"
   policy_definition_id = azurerm_policy_definition.storage_diaglogs.id
   subscription_id      = data.azurerm_subscription.current.id
   location             = "eastus"
 
   parameters = <<PARAMETERS
-      {
-	"authorizationRule": {
+{
+	"eventHubRuleId": {
 		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourceGroups/sample-1/providers/Microsoft.EventHub/namespaces/eventnamespaceankur/authorizationRules/RootManageSharedAccessKey"
 	},
-	"eventHub": {
-		"value": "activitylogssub"
-	},
-	"logAnalytics": {
-		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourcegroups/sample-1/providers/microsoft.operationalinsights/workspaces/samplelaws"
-	},
-	"Location": {
-		"value": "eastus"
+	"profileName": {
+		"value": "setbypolicy_eventHub"
 	}
 }
   PARAMETERS
