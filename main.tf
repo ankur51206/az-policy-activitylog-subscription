@@ -59,7 +59,6 @@ PARAMETERS
 
 
   policy_rule = <<POLICY_RULE
-
 {
         "if": {
             "allOf": [
@@ -181,10 +180,16 @@ resource "azurerm_subscription_policy_assignment" "assign_policy" {
   parameters = <<PARAMETERS
 {
 	"eventHubRuleId": {
-		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourceGroups/sample-1/providers/Microsoft.EventHub/namespaces/eventnamespaceankur/authorizationRules/RootManageSharedAccessKey"
+		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourcegroups/sample-1/providers/Microsoft.EventHub/namespaces/myeventhubankur/authorizationrules/RootManageSharedAccessKey"
 	},
 	"profileName": {
 		"value": "setbypolicy_eventHub"
+	},
+    	"eventHubRuleId": {
+		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourcegroups/sample-1/providers/Microsoft.EventHub/namespaces/myeventhubankureastus/authorizationrules/RootManageSharedAccessKey"
+	},
+	"profileName": {
+		"value": "setbypolicy_eventHub_eastus"
 	}
 }
   PARAMETERS
