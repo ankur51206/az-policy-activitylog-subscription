@@ -46,14 +46,14 @@ METADATA
             ],
             "defaultValue": "DeployIfNotExists"
         },
-        "location": {
-                "type": "string",
-                "metadata": {
-                    "displayName": "location",
-                    "description": "Select location where the resources is deployed",
-                    "strongType": "location"
-                }
-            },
+        	"Location": {
+			"type": "String",
+			"metadata": {
+				"displayName": "Resource Location",
+				"description": "Resource Location must be the same as the Event Hub Location",
+				"strongType": "location"
+			}
+		},	
         "profileName": {
             "type": "String",
             "metadata": {
@@ -73,25 +73,24 @@ PARAMETERS
                 {
                     "field": "type",
                     "equals": "Microsoft.Resources/subscriptions"
-                },
-                {
-                        "field": "location",
-                        "equals": "[parameters('location')]"
-                    }
+                }
             ]
         },
         "then": {
             "effect": "[parameters('effect')]",
             "details": {
                 "type": "Microsoft.Insights/diagnosticSettings",
-                "ExistenceScope": "Subscription",
-                "DeploymentScope": "Subscription",
+                "name": "[parameters('profileName')]",
                 "ExistenceCondition": {
                     "allOf": [
                         {
                             "field": "Microsoft.Insights/diagnosticSettings/eventHubAuthorizationRuleId",
                             "equals": "[parameters('eventHubRuleId')]"
                         },
+                        {
+                         "field": "location",
+			            "equals": "[parameters('Location')]"
+		                },
                         {
                             "field": "name",
                             "equals": "[parameters('profileName')]"
@@ -102,7 +101,6 @@ PARAMETERS
                     "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
                 ],
                 "deployment": {
-                    "location": "[parameters('location')]",
                     "properties": {
                         "mode": "incremental",
                         "template": {
@@ -113,7 +111,7 @@ PARAMETERS
                                     "type": "String"
                                 },
                                 "location": {
-                                     "type": "string"
+                                    "type": "String"
                                 },
                                 "profileName": {
                                     "type": "String"
@@ -170,9 +168,9 @@ PARAMETERS
                             "eventHubRuleId": {
                                 "value": "[parameters('eventHubRuleId')]"
                             },
-                            "location": {
-                                    "value": "[field('location')]"
-                                },
+                            "Location": {
+                                "value": "[field('location')]"
+                            },
                             "profileName": {
                                 "value": "[parameters('profileName')]"
                             }
@@ -190,21 +188,21 @@ POLICY_RULE
 data "azurerm_subscription" "current" {}
 
 resource "azurerm_subscription_policy_assignment" "assign_policy" {
-  name                 = "policy-assignment-activity-logs"
+  name                 = "policy-assignment-activity-logs-1"
   policy_definition_id = azurerm_policy_definition.storage_diaglogs.id
   subscription_id      = data.azurerm_subscription.current.id
-  location             = "eastus2"
+  location             = "centralus"
 
   parameters = <<PARAMETERS
 {
 	"eventHubRuleId": {
-		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourcegroups/sample-1/providers/Microsoft.EventHub/namespaces/myeventhubankurvc/authorizationrules/RootManageSharedAccessKey"
+		"value": "/subscriptions/f3d20c9f-3cb5-45df-b6a8-32f7f4e3d1b6/resourcegroups/sample-1/providers/Microsoft.EventHub/namespaces/myankurcentral/authorizationrules/RootManageSharedAccessKey"
 	},
 	"profileName": {
 		"value": "setbypolicy_eventHub"
 	},
-    	     "Location": {
-        "value": "eastus2"
+       "Location": {
+        "value": "centralus"
       }
 }
   PARAMETERS
